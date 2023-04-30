@@ -33,7 +33,7 @@ public class MvcConfig implements WebMvcConfigurer {
                         "/user/login"
                 ).order(1);
 
-        // token刷新的拦截器
+        // token刷新的拦截器，order中的值越小，优先级越高，下面的会拦截所以路径，每当经过这个路径都会刷新token
         registry.addInterceptor(new RefreshTokenInterceptor(stringRedisTemplate)).addPathPatterns("/**").order(0);
     }
 }
