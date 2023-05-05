@@ -9,6 +9,7 @@ import com.hmdp.service.IUserService;
 import com.hmdp.service.IVoucherOrderService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.hmdp.utils.RedisIdWorker;
+import com.hmdp.utils.SimpleRedisLock;
 import com.hmdp.utils.UserHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.framework.AopContext;
@@ -36,6 +37,9 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
     @Resource
     private RedisIdWorker redisIdWorker;
 
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
+
     @Override
     @Transactional
     public Result seckillVoucher(Long voucherId) {
@@ -58,10 +62,23 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
 
         Long userId = UserHolder.getUser().getId();
         //转换成String类型后，并不是同一个对象，不能成为同一个锁，需要使用intern()方法
-        synchronized (userId.toString().intern()){
-        //获取代理对象（事务）
-        IVoucherOrderService proxy = (IVoucherOrderService) AopContext.currentProxy();
-        return proxy.createVoucherOrder(voucherId);
+        //synchronized (userId.toString().intern()){
+
+        //创建锁对象（新增代码）
+        SimpleRedisLock lock = new SimpleRedisLock("order" + userId, stringRedisTemplate);
+        //获取锁对象
+        boolean isLock = lock.tryLock(1200L);
+        //加锁失败
+        if(!isLock){
+            return Result.fail("不允许重复下单");
+        }
+        try {
+            //获取代理对象（事务）
+            IVoucherOrderService proxy = (IVoucherOrderService) AopContext.currentProxy();
+            return proxy.createVoucherOrder(voucherId);
+
+        }finally {
+            lock.unLock();
         }
     }
 
@@ -82,8 +99,10 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
 
         //6.扣减库存
         boolean success = seckillVoucherService.update()
-                .setSql("stock=stock - 1")//set stock=stock-1
-                .eq("voucher_id", voucherId).gt("stock", 0).update(); //where id = ? and stock > 0
+                .setSql("stock = stock - 1") // set stock = stock - 1
+                .eq("voucher_id", voucherId).gt("stock", 0) // where id = ? and stock > 0
+                .update();
+
 
         if (!success) {
             //扣减库存
