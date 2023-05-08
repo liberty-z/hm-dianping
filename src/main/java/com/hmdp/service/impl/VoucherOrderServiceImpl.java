@@ -78,7 +78,7 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
             return proxy.createVoucherOrder(voucherId);
 
         }finally {
-            lock.unLock();
+            lock.unlock();
         }
     }
 
