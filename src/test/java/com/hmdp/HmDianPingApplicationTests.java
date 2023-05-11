@@ -1,9 +1,14 @@
 package com.hmdp;
 
+import com.hmdp.dto.UserDTO;
+import com.hmdp.entity.Blog;
 import com.hmdp.entity.Shop;
+import com.hmdp.service.IBlogService;
 import com.hmdp.service.IShopService;
+import com.hmdp.service.impl.BlogServiceImpl;
 import com.hmdp.service.impl.ShopServiceImpl;
 import com.hmdp.utils.RedisIdWorker;
+import com.hmdp.utils.UserHolder;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -20,6 +25,9 @@ class HmDianPingApplicationTests {
 
     @Resource
     private RedisIdWorker redisIdWorker;
+
+    @Resource
+    private BlogServiceImpl blogService;
 
     private ExecutorService es = Executors.newFixedThreadPool(500);
     @Test
@@ -46,4 +54,10 @@ class HmDianPingApplicationTests {
         long end = System.currentTimeMillis();
         System.out.println("time = " + (end - begin));
     }
+
+
+
+
+
+
 }

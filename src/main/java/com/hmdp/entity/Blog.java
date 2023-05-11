@@ -43,6 +43,7 @@ public class Blog implements Serializable {
     /**
      * 用户图标
      */
+    //该注解的意思是这个属性不是这个表中的
     @TableField(exist = false)
     private String icon;
     /**
