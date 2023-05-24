@@ -34,13 +34,14 @@ public class BlogController {
 
     @PostMapping
     public Result saveBlog(@RequestBody Blog blog) {
-        // 获取登录用户
+/*        // 获取登录用户
         UserDTO user = UserHolder.getUser();
         blog.setUserId(user.getId());
         // 保存探店博文
         blogService.save(blog);
         // 返回id
-        return Result.ok(blog.getId());
+        return Result.ok(blog.getId());*/
+        return blogService.saveBlog(blog);
     }
 
     @PutMapping("/like/{id}")
@@ -77,5 +78,24 @@ public class BlogController {
         return blogService.queryBlogLikes(id);
     }
 
+    @GetMapping("/of/user")
+    //例如，@RequestParam注解中定义了defaultValue属性值为“1”，那么当控制器处理请求时，如果请求中没有指定参数值，则参数值会被设置为默认值1。
+    //所以，defaultValue属性用于指定可选参数的默认值，以便在请求中未提供参数时使用
+    public Result queryBlogByUserId(@RequestParam(value = "current",defaultValue = "1")Integer current,
+                                    @RequestParam("id")Long id){
+        //根据用户查询
+        Page<Blog> page = blogService.query()
+                .eq("user_id", id).page(new Page<>(current, SystemConstants.MAX_PAGE_SIZE));
+
+        //获取当前页数据
+        List<Blog> records = page.getRecords();
+        return Result.ok(records);
+    }
+
+
+    @GetMapping("/of/follow")
+    public Result queryBlogFollow(@RequestParam("lastId")Long max,@RequestParam(value = "offset",defaultValue = "0")Integer offset){
+        return blogService.queryBlogOfFollow(max, offset);
+    }
 
 }
